@@ -20,14 +20,15 @@ ORDER = 4
 def PMTpulse(t):
     return A*np.exp(-t/TAU1)+B*np.exp(-t/TAU2)
 
-def f2(f1,deltaT,tStep):
-    tmp = np.append(np.zeros(deltaT/tStep),f1)
-    return tmp[:len(f1)]
+def f2(t2,deltaT,tStep):
+    tmp = PMTpulse(t2)[int(np.ceil(deltaT/tStep)):]
+
+    return np.append(np.zeros(int(np.ceil(deltaT/tStep))),tmp)
 
 # find cutoff freq for bw filter to cause -10dB drop by fs/2
 def cutoff(fs, order):
-#    return (0.5)**(10./(6*order))*fs/2
-    return .45*fs
+    return (0.5)**(10./(6*order))*fs/2
+#    return .45*fs
 def butter_lowpass(cutoff, fs, order=5):
     nyq = 0.5 * fs
     normal_cutoff = cutoff / nyq
@@ -42,14 +43,11 @@ def butter_lowpass_filter(data, cutoff, fs, order=5):
 ################################################################################
 
 t = np.linspace(0,TEND,(TEND*FS)+1) # 2 microsecond array in TSTEP ns steps
+t2 = t - DELTAT
 pulse1 = PMTpulse(t)
-pulse2 = f2(pulse1,DELTAT,1./FS)
+pulse2 = f2(t2,DELTAT,1./FS)
 data = pulse1+pulse2
 cutoff = cutoff(FS,ORDER)
-
-print(pulse1)
-print(pulse2)
-
 b, a = butter_lowpass(cutoff, FS, ORDER)
 
 y = butter_lowpass_filter(data, cutoff, FS, ORDER)
